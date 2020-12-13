@@ -115,18 +115,22 @@ class client_listen:
                     packet['target_id']:
                 item['func'](packet)
 
-    def add_listener(func):
-        callback_funcs.append(func)
+def add_listener(func):
+    callback_funcs.append(func)
 
-    def remove_listener(func):
-        callback_funcs.remove(func)
 
-    func_to_tuple = {}
+def remove_listener(func):
+    callback_funcs.remove(func)
 
-    def add_message_listener(target_type, target_id, func):
-        func_to_tuple[func] = {'target_type': target_type, 'target_id': target_id, 'func': func}
-        message_listeners.append(func_to_tuple[func])
 
-    def remove_message_listener(func):
-        if func in func_to_tuple:
-            message_listeners.remove(func_to_tuple[func])
+func_to_tuple = {}
+
+
+def add_message_listener(target_type, target_id, func):
+    func_to_tuple[func] = {'target_type': target_type, 'target_id': target_id, 'func': func}
+    message_listeners.append(func_to_tuple[func])
+
+
+def remove_message_listener(func):
+    if func in func_to_tuple:
+        message_listeners.remove(func_to_tuple[func])
