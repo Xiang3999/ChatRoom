@@ -2,7 +2,7 @@ import _tkinter
 import tkinter as tk
 from distutils import command
 from tkinter import messagebox
-from common.message import MessageType, _deserialize_any
+from common.mesg_type import MessageType
 from pprint import pprint
 import client.memory
 import select
@@ -10,10 +10,10 @@ import _thread
 from tkinter import *
 from client.components.vertical_scrolled_frame import VerticalScrolledFrame
 from client.components.contact_item import ContactItem
-from client.forms.chat_form import ChatForm
+from client.GUI.gui_chat import ChatForm
 from tkinter import Toplevel
 import datetime
-import client.util.socket_listener
+import client.event_handle
 import time
 from tkinter import simpledialog
 
@@ -22,7 +22,7 @@ class ContactsForm(tk.Frame):
     bundle_process_done = False
 
     def remove_socket_listener_and_close(self):
-        client.util.socket_listener.remove_listener(self.socket_listener)
+        client.event_handle.remove_listener(self.socket_listener)
         self.master.destroy()
         client.memory.tk_root.destroy()
 

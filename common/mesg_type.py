@@ -22,6 +22,8 @@ class MessageType(enum.IntEnum):
 
     bad = 10
 
+    long_mesg = 11
+
     # === Server Action 101-200
     login_successful = 100
     register_successful = 101
