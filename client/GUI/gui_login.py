@@ -38,13 +38,13 @@ class LoginForm(TK.Frame):
         super().__init__(master)
         self.master = master
         master.resizable(width=False, height=False)
-        master.geometry('300x100')
-        self.label_1 = Label(self, text="用户名")
-        self.label_2 = Label(self, text="密码")
+        master.geometry('400x200')
+        self.label_1 = Label(self, text="Username")
+        self.label_2 = Label(self, text="Password")
 
         self.username = Entry(self)
         self.password = Entry(self, show="*")
-
+        # grid是布局函数，sticky 对齐方式
         self.label_1.grid(row=0, sticky=E)
         self.label_2.grid(row=1, sticky=E)
         self.username.grid(row=0, column=1, pady=(10, 6))
@@ -53,16 +53,16 @@ class LoginForm(TK.Frame):
         self.buttonframe = Frame(self)
         self.buttonframe.grid(row=2, column=0, columnspan=2, pady=(4, 6))
 
-        self.logbtn = Button(self.buttonframe, text="登入", command=self.do_login)
+        self.logbtn = Button(self.buttonframe, text="Log In", command=self.do_login)
         self.logbtn.grid(row=0, column=0)
 
-        self.registerbtn = Button(self.buttonframe, text="注册", command=self.show_register)
+        self.registerbtn = Button(self.buttonframe, text="Sign up", command=self.show_register)
         self.registerbtn.grid(row=0, column=1)
 
         self.pack()
         self.master.title("聊天室")
 
-        self.sc = client.memory.sc
+        self.s = client.memory.socket
         # self.sc.send(MessageType.client_echo, 0)
         client.util.socket_listener.add_listener(self.socket_listener)
 
@@ -76,7 +76,7 @@ class LoginForm(TK.Frame):
             messagebox.showerror("出错了", "密码不能为空")
             return
 
-        self.sc.send(mesg_type.MessageType.login, [username, password])
+        self.s.send(mesg_type.MessageType.login, [username, password])
 
     def show_register(self):
         register_form = Toplevel()

@@ -22,13 +22,13 @@ class ContactsForm(tk.Frame):
     bundle_process_done = False
 
     def remove_socket_listener_and_close(self):
-        client.event_handle.remove_listener(self.socket_listener)
+        client.event_handle.client_listen.remove_listener(self.socket_listener)
         self.master.destroy()
         client.memory.tk_root.destroy()
 
     def socket_listener(self, data):
         if data['type'] == MessageType.login_bundle:
-            bundle = data['parameters']
+            bundle = data['data']
             friends = bundle['friends']
             rooms = bundle['rooms']
             messages = bundle['messages']
@@ -36,11 +36,7 @@ class ContactsForm(tk.Frame):
                 self.handle_new_contact(friend)
             for room in rooms:
                 self.handle_new_contact(room)
-            for item in messages:
-                # [[data:bytes,sent:int]]
-                sent = item[1]
-                message = _deserialize_any(item[0])
-                client.util.socket_listener.digest_message(message, not sent)
+            client.event_handle.client_listen.deal_packet(messages)
 
             self.bundle_process_done = True
             self.refresh_contacts()
@@ -216,7 +212,7 @@ class ContactsForm(tk.Frame):
         #     contact.pack(fill=BOTH, expand=True)
         #     contact.bind("<Button>", self.on_frame_click)
 
-        self.master.title(client.memory.current_user['nickname'] + " - 联系人列表")
+        self.master.title(client.memory.user_inf['nickname'] + " - 联系人列表")
         self.sc = client.memory.sc
         client.util.socket_listener.add_listener(self.socket_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_socket_listener_and_close)

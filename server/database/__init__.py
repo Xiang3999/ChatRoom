@@ -1,5 +1,5 @@
 import sqlite3
-from server.server_function.remove_c_from_client_list import *
+from server.server_function.memory import *
 
 conn = sqlite3.connect('database.db', isolation_level=None)
 

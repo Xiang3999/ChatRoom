@@ -6,7 +6,7 @@ from common.net import *
 import json
 import threading
 import select
-from  server.server_function.remove_c_from_client_list import *
+from server.server_function.memory import *
 from server.database import *
 
 class ChatServer:
