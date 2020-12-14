@@ -41,7 +41,7 @@ CREATE TABLE "chat_history" (
 "user_id"  INTEGER,
 "target_id"  INTEGER,
 "target_type"  TEXT,
-"data"  BLOB,
+"data"  TEXT,
 "sent"  INTEGER,
 -- "time"
 PRIMARY KEY ("id" ASC)

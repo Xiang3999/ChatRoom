@@ -1,15 +1,11 @@
 import _tkinter
 import tkinter as tk
-from common.transmission.secure_channel import establish_secure_channel_to_server
 from tkinter import messagebox
-from common.message import MessageType
-from pprint import pprint
-
-from client.memory import current_user
-import select
-import client.util.socket_listener
+from common.mesg_type import MessageType
+import client.event_handle
 import client.memory
 from tkinter import *
+from common.net import send11
 
 
 class RegisterForm(tk.Frame):
@@ -19,12 +15,12 @@ class RegisterForm(tk.Frame):
             return
 
         if data['type'] == MessageType.register_successful:
-            messagebox.showinfo('恭喜', '恭喜，注册成功，您的用户ID为：' + str(data['parameters']))
+            messagebox.showinfo('恭喜', '恭喜，注册成功，您的用户ID为：' + str(data['data']))
             self.remove_socket_listener_and_close()
             return
 
     def remove_socket_listener_and_close(self):
-        client.util.socket_listener.remove_listener(self.socket_listener)
+        client.event_handle.client_listen.remove_listener(self.socket_listener)
         self.master.destroy()
 
     def do_register(self):
@@ -44,22 +40,21 @@ class RegisterForm(tk.Frame):
         if password != password_confirmation:
             messagebox.showerror("出错了", "两次密码输入不一致")
             return
-        self.sc.send(MessageType.register, [username, password, nickname])
+        send11(self.s, MessageType.register, [username, password, nickname])
 
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.sc = client.memory.sc
-
+        self.s = client.memory.socket
 
         master.resizable(width=False, height=False)
         master.geometry('190x140')
-        self.master.title("注册账户")
+        self.master.title("REGISTER")
 
-        self.label_1 = Label(self, text="用户名")
-        self.label_2 = Label(self, text="密码")
-        self.label_3 = Label(self, text="确认密码")
-        self.label_4 = Label(self, text="昵称")
+        self.label_1 = Label(self, text="username")
+        self.label_2 = Label(self, text="password")
+        self.label_3 = Label(self, text="confirm")
+        self.label_4 = Label(self, text="nickname")
 
         self.username = Entry(self)
         self.password = Entry(self, show="*")
@@ -76,10 +71,10 @@ class RegisterForm(tk.Frame):
         self.password_confirmation.grid(row=2, column=1, pady=(0, 6))
         self.nickname.grid(row=3, column=1, pady=(0, 6))
 
-        self.regbtn = Button(self, text="注册", command=self.do_register)
+        self.regbtn = Button(self, text="Sign up", command=self.do_register)
         self.regbtn.grid(row=4, column=0, columnspan=2)
         self.pack()
 
-        self.sc = client.memory.sc
-        client.util.socket_listener.add_listener(self.socket_listener)
+        self.s = client.memory.socket
+        client.event_handle.client_listen.add_listener(self.socket_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_socket_listener_and_close)

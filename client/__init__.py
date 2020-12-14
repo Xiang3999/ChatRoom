@@ -20,7 +20,7 @@ def start():
     thread.start()
 
     login = TK.Toplevel()
-    LoginForm(matser=login)
+    LoginForm(login)
 
     root.withdraw()
     root.mainloop()

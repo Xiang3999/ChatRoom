@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*- 
+# @Time : 2020/12/14 19:22 
+# @Author : PAO 
+# @File : gui_contacts.py
 import tkinter as tk
 from tkinter import messagebox
 from common.mesg_type import MessageType
@@ -10,7 +14,8 @@ from tkinter import Toplevel
 import datetime
 import client.event_handle
 from tkinter import simpledialog
-from common.net import send11
+from common.net import *
+
 
 class ContactsForm(tk.Frame):
     bundle_process_done = False
@@ -20,9 +25,9 @@ class ContactsForm(tk.Frame):
         self.master.destroy()
         client.memory.tk_root.destroy()
 
-    def socket_listener(self, data):
-        if data['type'] == MessageType.login_bundle:
-            bundle = data['data']
+    def socket_listener(self, frame):
+        if frame['type'] == MessageType.login_bundle:
+            bundle = frame['data']
             friends = bundle['friends']
             rooms = bundle['rooms']
             messages = bundle['messages']
@@ -30,34 +35,38 @@ class ContactsForm(tk.Frame):
                 self.handle_new_contact(friend)
             for room in rooms:
                 self.handle_new_contact(room)
-            client.event_handle.client_listen.deal_packet(messages)
+            for item in messages:
+                # [[data:bytes,sent:int]]
+                sent = item[1]
+                message = item[0]
+                client.event_handle.client_listen.deal_packet(message, not sent)
 
             self.bundle_process_done = True
             self.refresh_contacts()
 
-        if data['type'] == MessageType.incoming_friend_request:
-            result = messagebox.askyesnocancel("好友请求", data['parameters']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
+        if frame['type'] == MessageType.incoming_friend_request:
+            result = messagebox.askyesnocancel("好友请求", frame['data']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
             if result == None:
                 return
-            send11(self.s, MessageType.resolve_friend_request, [data['parameters']['id'], result])
+            self.s.send(MessageType.resolve_friend_request, [frame['data']['id'], result])
 
-        if data['type'] == MessageType.contact_info:
-            self.handle_new_contact(data['parameters'])
+        if frame['type'] == MessageType.contact_info:
+            self.handle_new_contact(frame['data'])
             return
 
-        if data['type'] == MessageType.add_friend_result:
-            if data['parameters'][0]:
+        if frame['type'] == MessageType.add_friend_result:
+            if frame['data'][0]:
                 messagebox.showinfo('添加好友', '好友请求已发送')
             else:
-                messagebox.showerror('添加好友失败', data['parameters'][1])
+                messagebox.showerror('添加好友失败', frame['data'][1])
             return
 
-        if data['type'] == MessageType.friend_on_off_line:
-            friend_user_id = data['parameters'][1]
+        if frame['type'] == MessageType.friend_on_off_line:
+            friend_user_id = frame['data'][1]
 
             for i in range(0, len(self.contacts)):
                 if self.contacts[i]['id'] == friend_user_id and self.contacts[i]['type'] == 0:
-                    self.contacts[i]['online'] = data['parameters'][0]
+                    self.contacts[i]['online'] = frame['data'][0]
                     break
 
             self.refresh_contacts()

@@ -1,7 +1,7 @@
 import sqlite3
 from server.server_function.memory import *
 
-conn = sqlite3.connect('database.db', isolation_level=None)
+conn = sqlite3.connect('server/database/database.db', isolation_level=None)
 
 def get_cursor():
     return conn.cursor()
@@ -13,12 +13,13 @@ def commit():
 def get_user(user_id):
     c = get_cursor()
     fields = ['user_id', 'username', 'nickname']
-    row = c.execute('SELECT ' + ','.join(fields) + ' FROM users WHERE id=?', [user_id]).fetchall()
+    row = c.execute('SELECT ' + ','.join(fields) + ' FROM users WHERE user_id=?', [user_id]).fetchall()
     if len(row) == 0:
         return None
     else:
         user = dict(zip(fields, row[0]))
         user['online'] = user_id in user_id_to_sc
+        # { 'user_id': XX, 'username':XX, 'nickname':XX,'online':True/False
         return user
 
 def get_pending_friend_request(user_id):

@@ -1,16 +1,17 @@
 import tkinter as tk
 from tkinter import *
-
+import datetime
 import client.memory
-from client.util.socket_listener import *
+from client.event_handle import *
 from tkinter.scrolledtext import ScrolledText
 from tkinter import colorchooser
 from tkinter import simpledialog
 from tkinter import filedialog
 from PIL import Image, ImageTk
 from io import BytesIO
-from client.util import socket_listener
+import client.event_handle
 import binascii
+from common.net import *
 
 
 class ChatForm(tk.Frame):
@@ -20,8 +21,8 @@ class ChatForm(tk.Frame):
     tag_i = 0
 
     def remove_listener_and_close(self):
-        remove_message_listener(self.message_listener)
-        client.util.socket_listener.remove_listener(self.socket_listener)
+        client_listen.remove_message_listener(self.message_listener)
+        client.event_handle.client_listen.remove_listener(self.socket_listener)
         self.master.destroy()
         if self.target['id'] in client.memory.window_instance[self.target['type']]:
             del client.memory.window_instance[self.target['type']][self.target['id']]
@@ -61,7 +62,7 @@ class ChatForm(tk.Frame):
             int(data['time']) / 1000
         ).strftime('%Y-%m-%d %H:%M:%S')
         self.append_to_chat_box(data['sender_name'] + "  " + time + '\n',
-                                ('me' if client.memory.current_user['id'] == data[
+                                ('me' if client.memory.user_inf['id'] == data[
                                     'sender_id'] else 'them'))
         # type 0 - 文字消息 1 - 图片消息
         if data['message']['type'] == 0:
@@ -85,7 +86,7 @@ class ChatForm(tk.Frame):
         selected_user_id = self.user_list[len(self.user_list) - 1 - index][0]
         selected_user_nickname = self.user_list[len(self.user_list) - 1 - index][1]
         selected_user_username = self.user_list[len(self.user_list) - 1 - index][3]
-        if selected_user_id == client.memory.current_user['id']:
+        if selected_user_id == client.memory.user_inf['id']:
             return
         client.memory.contact_window[0].try_open_user_id(selected_user_id, selected_user_nickname,
                                                          selected_user_username)
@@ -97,20 +98,20 @@ class ChatForm(tk.Frame):
         self.master = master
         self.target = target
         self.user_listbox = tk.Listbox(self, bg='#EEE')
-        client.util.socket_listener.add_listener(self.socket_listener)
+        client.event_handle.client_listen.add_listener(self.socket_listener)
         client.memory.unread_message_count[self.target['type']][self.target['id']] = 0
         client.memory.contact_window[0].refresh_contacts()
         master.resizable(width=True, height=True)
         master.geometry('660x500')
         master.minsize(520, 370)
-        self.sc = client.memory.sc
+        self.s = client.memory.socket
 
         if self.target['type'] == 0:
             self.master.title(self.target['nickname'])
 
         if self.target['type'] == 1:
             self.master.title("群:" + str(self.target['id']) + " " + self.target['room_name'])
-            self.sc.send(MessageType.query_room_users, self.target['id'])
+            send11(self.s, MessageType.query_room_users, self.target['id'])
 
         self.right_frame = tk.Frame(self, bg='white')
 
@@ -152,7 +153,7 @@ class ChatForm(tk.Frame):
 
         self.pack(expand=True, fill=BOTH)
 
-        add_message_listener(self.target['type'], self.target['id'], self.message_listener)
+        client_listen.add_message_listener(self.target['type'], self.target['id'], self.message_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_listener_and_close)
 
         # 历史消息显示
@@ -171,15 +172,15 @@ class ChatForm(tk.Frame):
         message = self.input_textbox.get("1.0", END)
         if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
-        self.sc.send(MessageType.send_message,
-                     {'target_type': self.target['type'], 'target_id': self.target['id'],
-                      'message': {
-                          'type': 0,
-                          'data': message.strip().strip('\n'),
-                          'fontsize': self.font_size,
-                          'fontcolor': self.font_color
-                      }
-                      })
+        send11(self.s, MessageType.send_message,
+               {'target_type': self.target['type'], 'target_id': self.target['id'],
+                'message': {
+                    'type': 0,
+                    'data': message.strip().strip('\n'),
+                    'fontsize': self.font_size,
+                    'fontcolor': self.font_color
+                }
+                })
         self.input_textbox.delete("1.0", END)
         return 'break'
 
@@ -212,6 +213,6 @@ class ChatForm(tk.Frame):
             f = imageFile.read()
             b = bytearray(f)
 
-            self.sc.send(MessageType.send_message,
-                         {'target_type': self.target['type'], 'target_id': self.target['id'],
-                          'message': {'type': 1, 'data': b}})
+            send11(self.s, MessageType.send_message,
+                   {'target_type': self.target['type'], 'target_id': self.target['id'],
+                    'message': {'type': 1, 'data': b}})

@@ -1,20 +1,18 @@
-import _tkinter
 import tkinter as TK
 from tkinter import messagebox
 from common import mesg_type
 import client.memory
-#from client.forms.register_form import RegisterForm
-#from client.forms.contacts_form import ContactsForm
-import select
-import _thread
+from client.GUI.gui_register import RegisterForm
+from client.GUI.gui_contacts import ContactsForm
 from tkinter import *
 from tkinter import Toplevel
 import client.event_handle
+from common.net import send11
 
 
 class LoginForm(TK.Frame):
     def remove_socket_listener_and_close(self):
-        client.util.socket_listener.remove_listener(self.socket_listener)
+        client.event_handle.client_listen.remove_listener(self.socket_listener)
         self.master.destroy()
 
     def destroy_window(self):
@@ -26,7 +24,7 @@ class LoginForm(TK.Frame):
             return
 
         if data['type'] == mesg_type.MessageType.login_successful:
-            client.memory.current_user = data['parameters']
+            client.memory.current_user = data['data']
             self.remove_socket_listener_and_close()
 
             contacts = Toplevel(client.memory.tk_root, takefocus=True)
@@ -60,11 +58,10 @@ class LoginForm(TK.Frame):
         self.registerbtn.grid(row=0, column=1)
 
         self.pack()
-        self.master.title("聊天室")
+        self.master.title("CHAT ROOM BY PAO")
 
         self.s = client.memory.socket
-        # self.sc.send(MessageType.client_echo, 0)
-        client.util.socket_listener.add_listener(self.socket_listener)
+        client.event_handle.client_listen.add_listener(self.socket_listener)
 
     def do_login(self):
         username = self.username.get()
@@ -76,7 +73,7 @@ class LoginForm(TK.Frame):
             messagebox.showerror("出错了", "密码不能为空")
             return
 
-        self.s.send(mesg_type.MessageType.login, [username, password])
+        send11(self.s, mesg_type.MessageType.login, [username, password])
 
     def show_register(self):
         register_form = Toplevel()
