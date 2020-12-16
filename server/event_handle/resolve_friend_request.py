@@ -31,7 +31,12 @@ def run(s, data):
         c = database.get_cursor()
         c.execute('insert into friends (from_user_id,to_user_id,accepted) values (?,?,1)', [user_id, uid])
 
-        send11(s, MessageType.contact_info, add_target_type(database.get_user(uid), 0))
+        send11(s, MessageType.contact_info, add_target_type1(database.get_user(uid), 0))
 
         if uid in user_id_to_sc:
-            send11(user_id_to_sc[uid], MessageType.contact_info, add_target_type(database.get_user(user_id), 0))
+            send11(user_id_to_sc[uid], MessageType.contact_info, add_target_type1(database.get_user(user_id), 0))
+
+
+def add_target_type1(obj, type):
+    obj['type'] = type
+    return obj

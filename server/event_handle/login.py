@@ -41,7 +41,7 @@ def run(s, data):
 
     # 发送群列表
     rms = database.get_user_rooms(user_id)
-    login_bundle['rooms'] = list(map(lambda x: add_target_type(x, 1), rms))
+    login_bundle['rooms'] = list(map(lambda x: add_target_type4(x, 1), rms))
 
     # for rm in rms:
     #     sc.send(MessageType.contact_info, add_target_type(rm, 1))
@@ -54,11 +54,11 @@ def run(s, data):
 
     # 发送好友列表
     frs = database.get_friends(user_id)
-    login_bundle['friends'] = list(map(lambda x: add_target_type(x, 0), frs))
+    login_bundle['friends'] = list(map(lambda x: add_target_type4(x, 0), frs))
     # 通知他的好友他上线了
     for fr in frs:
-        if fr['id'] in user_id_to_sc:
-            user_id_to_sc[fr['id']].send(MessageType.friend_on_off_line, [True, user_id])
+        if fr['user_id'] in user_id_to_sc:
+            send11(user_id_to_sc[fr['user_id']], MessageType.friend_online_state, [True, user_id])
 
     # 通知群聊里的人他上线了
     # [room_id, user_id, online]
@@ -67,14 +67,19 @@ def run(s, data):
         users_id = database.get_room_members_id(room_id)
         for _user_id in users_id:
             if _user_id in user_id_to_sc and user_id != _user_id:
-                user_id_to_sc[_user_id].send(MessageType.room_user_on_off_line,
-                                             [room_id, user_id, True])
+                send11(user_id_to_sc[_user_id], MessageType.room_user_on_off_line,
+                       [room_id, user_id, True])
 
     login_bundle['messages'] = database.get_chat_history(user_id)
-    s.send(MessageType.login_bundle, login_bundle)
+    send11(s, MessageType.login_bundle, login_bundle)
 
 
 def to_md5(text):
     m = md5()
     m.update(text.encode('utf-8'))
     return m.hexdigest()
+
+
+def add_target_type4(obj, type):
+    obj['type'] = type
+    return obj

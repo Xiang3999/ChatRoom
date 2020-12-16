@@ -1,6 +1,7 @@
 import socket
 from common.config import get_config
 import json
+import time
 
 
 def connection_To_Server():
@@ -28,7 +29,7 @@ def connection_To_Client(s):
 
 
 def recv11(s):
-    return json.loads(s.recv(1024).decode("utf-8"))
+    return json.loads(s.recv(5120).decode("utf-8"))
 
     # 这里接送大文件需要检测包的顺序
 
@@ -43,4 +44,5 @@ def send11(so, type, data=None):
         'data': data
     }
     packet = json.dumps(dir)
+    time.sleep(0.009)
     so.send(packet.encode('utf-8'))

@@ -75,9 +75,9 @@ class ChatServer:
                             user_id = client_to_user_id[client_s]
                             friends=database.get_friends(user_id)
                             for friend in friends:
-                                if friend['id'] in user_id_to_sc:
-                                    send11(user_id_to_sc[friend['id']],
-                                           MessageType.friend_online_state, "0" + user_id)
+                                if friend['user_id'] in user_id_to_sc:
+                                    send11(user_id_to_sc[friend['user_id']],
+                                           MessageType.friend_online_state, [False, user_id])
                             # 获取群号，通知群成员他下线了
                             rooms_id = database.get_user_rooms_id(user_id)
                             for room_id in rooms_id:
@@ -86,7 +86,7 @@ class ChatServer:
                                 for fri_id in fris_id:
                                     if fri_id in user_id_to_sc and fri_id != user_id:
                                         send11(user_id_to_sc[fri_id],
-                                               MessageType.room_user_on_off_line, "0" + user_id)
+                                               MessageType.room_user_on_off_line, [room_id, user_id, False])
                         # 移除列表
                         remove_c_from_client_list(client_s)
                 if frame != "":

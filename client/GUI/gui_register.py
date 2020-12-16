@@ -48,7 +48,7 @@ class RegisterForm(tk.Frame):
         self.s = client.memory.socket
 
         master.resizable(width=False, height=False)
-        master.geometry('190x140')
+        master.geometry('230x160')
         self.master.title("REGISTER")
 
         self.label_1 = Label(self, text="username")

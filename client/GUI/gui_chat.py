@@ -24,27 +24,27 @@ class ChatForm(tk.Frame):
         client_listen.remove_message_listener(self.message_listener)
         client.event_handle.client_listen.remove_listener(self.socket_listener)
         self.master.destroy()
-        if self.target['id'] in client.memory.window_instance[self.target['type']]:
-            del client.memory.window_instance[self.target['type']][self.target['id']]
+        if self.target['user_id'] in client.memory.window_instance[self.target['type']]:
+            del client.memory.window_instance[self.target['type']][self.target['user_id']]
 
     def message_listener(self, data):
         self.digest_message(data)
 
     def socket_listener(self, data):
         if data['type'] == MessageType.query_room_users_result:
-            if data['parameters'][1] != self.target['id']:
+            if data['data'][1] != self.target['user_id']:
                 return
             # [id, nickname, online, username]
-            self.user_list = data['parameters'][0]
+            self.user_list = data['data'][0]
             self.refresh_user_listbox()
 
         if data['type'] == MessageType.room_user_on_off_line:
             # [room_id, user_id, online]
-            if data['parameters'][0] != self.target['id']:
+            if data['data'][0] != self.target['user_id']:
                 return
             for i in range(0, len(self.user_list)):
-                if self.user_list[i][0] == data['parameters'][1]:
-                    self.user_list[i][2] = data['parameters'][2]
+                if self.user_list[i][0] == data['data'][1]:
+                    self.user_list[i][2] = data['data'][2]
 
             self.refresh_user_listbox()
 
@@ -62,7 +62,7 @@ class ChatForm(tk.Frame):
             int(data['time']) / 1000
         ).strftime('%Y-%m-%d %H:%M:%S')
         self.append_to_chat_box(data['sender_name'] + "  " + time + '\n',
-                                ('me' if client.memory.user_inf['id'] == data[
+                                ('me' if client.memory.user_inf['user_id'] == data[
                                     'sender_id'] else 'them'))
         # type 0 - 文字消息 1 - 图片消息
         if data['message']['type'] == 0:
@@ -86,7 +86,7 @@ class ChatForm(tk.Frame):
         selected_user_id = self.user_list[len(self.user_list) - 1 - index][0]
         selected_user_nickname = self.user_list[len(self.user_list) - 1 - index][1]
         selected_user_username = self.user_list[len(self.user_list) - 1 - index][3]
-        if selected_user_id == client.memory.user_inf['id']:
+        if selected_user_id == client.memory.user_inf['user_id']:
             return
         client.memory.contact_window[0].try_open_user_id(selected_user_id, selected_user_nickname,
                                                          selected_user_username)
@@ -99,7 +99,7 @@ class ChatForm(tk.Frame):
         self.target = target
         self.user_listbox = tk.Listbox(self, bg='#EEE')
         client.event_handle.client_listen.add_listener(self.socket_listener)
-        client.memory.unread_message_count[self.target['type']][self.target['id']] = 0
+        client.memory.unread_message_count[self.target['type']][self.target['user_id']] = 0
         client.memory.contact_window[0].refresh_contacts()
         master.resizable(width=True, height=True)
         master.geometry('660x500')
@@ -110,8 +110,8 @@ class ChatForm(tk.Frame):
             self.master.title(self.target['nickname'])
 
         if self.target['type'] == 1:
-            self.master.title("群:" + str(self.target['id']) + " " + self.target['room_name'])
-            send11(self.s, MessageType.query_room_users, self.target['id'])
+            self.master.title("群:" + str(self.target['user_id']) + " " + self.target['room_name'])
+            send11(self.s, MessageType.query_room_users, self.target['user_id'])
 
         self.right_frame = tk.Frame(self, bg='white')
 
@@ -153,12 +153,12 @@ class ChatForm(tk.Frame):
 
         self.pack(expand=True, fill=BOTH)
 
-        client_listen.add_message_listener(self.target['type'], self.target['id'], self.message_listener)
+        client_listen.add_message_listener(self.target['type'], self.target['user_id'], self.message_listener)
         master.protocol("WM_DELETE_WINDOW", self.remove_listener_and_close)
 
         # 历史消息显示
-        if target['id'] in client.memory.chat_history[self.target['type']]:
-            for msg in client.memory.chat_history[self.target['type']][target['id']]:
+        if target['user_id'] in client.memory.chat_history[self.target['type']]:
+            for msg in client.memory.chat_history[self.target['type']][target['user_id']]:
                 self.digest_message(msg)
 
             self.append_to_chat_box('- 以上是历史消息 -\n', 'system')
@@ -173,7 +173,7 @@ class ChatForm(tk.Frame):
         if not message or message.replace(" ", "").replace("\r", "").replace("\n", "") == '':
             return
         send11(self.s, MessageType.send_message,
-               {'target_type': self.target['type'], 'target_id': self.target['id'],
+               {'target_type': self.target['type'], 'target_id': self.target['user_id'],
                 'message': {
                     'type': 0,
                     'data': message.strip().strip('\n'),

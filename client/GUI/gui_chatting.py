@@ -36,28 +36,28 @@ class ContactsForm(tk.Frame):
             self.refresh_contacts()
 
         if data['type'] == MessageType.incoming_friend_request:
-            result = messagebox.askyesnocancel("好友请求", data['parameters']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
+            result = messagebox.askyesnocancel("好友请求", data['data']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
             if result == None:
                 return
-            send11(self.s, MessageType.resolve_friend_request, [data['parameters']['id'], result])
+            send11(self.s, MessageType.resolve_friend_request, [data['data']['user_id'], result])
 
         if data['type'] == MessageType.contact_info:
-            self.handle_new_contact(data['parameters'])
+            self.handle_new_contact(data['data'])
             return
 
         if data['type'] == MessageType.add_friend_result:
-            if data['parameters'][0]:
+            if data['data'][0]:
                 messagebox.showinfo('添加好友', '好友请求已发送')
             else:
-                messagebox.showerror('添加好友失败', data['parameters'][1])
+                messagebox.showerror('添加好友失败', data['data'][1])
             return
 
-        if data['type'] == MessageType.friend_on_off_line:
-            friend_user_id = data['parameters'][1]
+        if data['type'] == MessageType.friend_online_state:
+            friend_user_id = data['data'][1]
 
             for i in range(0, len(self.contacts)):
                 if self.contacts[i]['id'] == friend_user_id and self.contacts[i]['type'] == 0:
-                    self.contacts[i]['online'] = data['parameters'][0]
+                    self.contacts[i]['online'] = data['data'][0]
                     break
 
             self.refresh_contacts()
@@ -70,7 +70,7 @@ class ContactsForm(tk.Frame):
         self.refresh_contacts()
 
     def on_frame_click(self, e):
-        item_id = e.widget.item['id']
+        item_id = e.widget.item['user_id']
         if item_id in client.memory.window_instance[e.widget.item['type']]:
             client.memory.window_instance[e.widget.item['type']][item_id].master.deiconify()
             return
@@ -105,7 +105,7 @@ class ContactsForm(tk.Frame):
 
         for i in range(0, len(self.pack_objs)):
             frame = self.pack_objs[i]
-            if frame.item['id'] == id and frame.item['type'] == 0:
+            if frame.item['user_id'] == id and frame.item['type'] == 0:
                 self.on_frame_click(self.my_event(frame))
                 return
         result = messagebox.askyesno("是否加好友", name + "不在您的好友列表中，是否加好友？")

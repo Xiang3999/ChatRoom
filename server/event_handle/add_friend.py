@@ -10,10 +10,10 @@ from common.net import send11
 
 def run(s, data):
     user_id = client_to_user_id[s]
-    # parameters = username
+    # data = username
     c = database.get_cursor()
     username = data.strip().lower()
-    r = c.execute('SELECT id from users where username=?', [username]).fetchall()
+    r = c.execute('SELECT user_id from users where username=?', [username]).fetchall()
     if len(r) == 0:
         send11(s, MessageType.add_friend_result, [False, '用户名不存在'])
         return

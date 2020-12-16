@@ -1,6 +1,6 @@
 import sqlite3
 from server.server_function.memory import *
-
+import json
 conn = sqlite3.connect('server/database/database.db', isolation_level=None)
 
 def get_cursor():
@@ -43,7 +43,7 @@ def get_friends(user_id):
 def get_user_rooms(user_id):
     c = get_cursor()
     rooms = []
-    rows = c.execute('SELECT room_id FROM chat_room WHERE user_id=?', [user_id]).fetchall()
+    rows = c.execute('SELECT room_id FROM room_list WHERE user_id=?', [user_id]).fetchall()
     for row in rows:
         room_id = row[0]
         rooms.append(get_room(room_id))
@@ -67,7 +67,7 @@ def is_friend_with(from_user_id, to_user_id):
 def get_room(room_id):
     c = get_cursor()
     fields = ['room_id', 'room_name']
-    row = c.execute('SELECT ' + ','.join(fields) + ' FROM chat_room WHERE id=?', [room_id]).fetchall()
+    row = c.execute('SELECT ' + ','.join(fields) + ' FROM chat_room WHERE room_id=?', [room_id]).fetchall()
     if len(row) == 0:
         return None
     else:
@@ -92,11 +92,12 @@ def get_room_members_id(room_id):
 def get_room_members(room_id):
     # [id, nickname, online, username]
     return list(map(lambda x: [x[0], x[1], x[0] in user_id_to_sc, x[2]], get_cursor().execute(
-        'SELECT user_id,nickname,username FROM room_user LEFT JOIN users ON users.id=user_id WHERE room_id=?',
+        'SELECT user_id,nickname,username FROM room_list LEFT JOIN users ON users.id=user_id WHERE room_id=?',
         [room_id]).fetchall()))
 
 
 def add_to_chat_history(user_id, target_id, target_type, data, sent):
+    data = json.dumps(data)
     c = get_cursor()
     c.execute('INSERT INTO chat_history (user_id,target_id,target_type,data,sent) VALUES (?,?,?,?,?)',
               [user_id, target_id, target_type, data, sent])
@@ -106,7 +107,7 @@ def add_to_chat_history(user_id, target_id, target_type, data, sent):
 # [[data:bytes,sent:int]]
 def get_chat_history(user_id):
     c = get_cursor()
-    ret = list(map(lambda x: [bytearray(x[0]), x[1]],
+    ret = list(map(lambda x: [json.loads(x[0]), x[1]],
                    c.execute('SELECT data,sent FROM chat_history WHERE user_id=?',
                              [user_id]).fetchall()))
     c = get_cursor()

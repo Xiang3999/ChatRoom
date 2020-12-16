@@ -13,7 +13,6 @@ import server.event_handle.create_room
 import server.event_handle.query_room_users
 import server.event_handle.bad
 from common.mesg_type import MessageType
-from hashlib import md5
 
 event_handle_map = {
     MessageType.login: login,

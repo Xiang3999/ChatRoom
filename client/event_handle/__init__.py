@@ -4,18 +4,21 @@ from tkinter import messagebox
 from pprint import pprint
 from common.mesg_type import MessageType
 import client.memory
-import  struct
-import  sys
+import struct
+import sys
 import traceback  # 异常处理包
+import jsonlines
 
-callback_funcs=[]
+callback_funcs = []
 
-#[{target_id,target_type,func}]
+# [{target_id,target_type,func}]
 message_listeners = []
 func_to_tuple = {}
+
+
 class client_listen:
-    def __init__(self,s,root):
-        self.scoket=s
+    def __init__(self, s, root):
+        self.scoket = s
         self.tk_root=root
         self.start_listen_thread()
     def start_listen_thread(self):
@@ -39,8 +42,8 @@ class client_listen:
                 # 接受数据
                 # ata_buffer+=bytes(frame['data'])
 
-                if frame != "":
-                    if int(frame['type']) == MessageType.long_mesg:
+                if frame != None:
+                    if frame['type'] == MessageType.long_mesg:
                         frame = self._recv_bigdata(self.scoket)
                     try:
                         data = frame
@@ -72,22 +75,28 @@ class client_listen:
                         traceback.print_exc(file=sys.stdout)
                         pass
 
-    def gen_last_message(obj):
+    def gen_last_message(self, obj):
         # type 0 - 文字消息 1 - 图片消息
         prefix = ''
         if obj['target_type'] == 1:
             return obj['sender_name'] + ':' + '[图片消息]'
         if obj['target_type'] == 0:
-            return obj['sender_name'] + ':' + obj['message'].replace('\n', ' ')
+            return obj['sender_name'] + ':' + json.dumps(obj['message'])
 
     def _recv(self, s):
-        return json.loads(s.recv(1024).decode("utf-8"))
+        recv_data = s.recv(5120).decode("utf-8")
+        try:
+            return json.loads(recv_data)
+        except:
+            pass
 
     def _recv_bigdata(self, s):
         return "ok"
 
     def deal_packet(self, packet, update_unread_count=True):
         # 放入 chat_history
+        if not packet:
+            return
         if packet['target_id'] not in client.memory.chat_history[
             packet['target_type']]:
             client.memory.chat_history[packet['target_type']][packet['target_id']] = []

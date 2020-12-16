@@ -48,7 +48,7 @@ class ContactsForm(tk.Frame):
             result = messagebox.askyesnocancel("好友请求", frame['data']['nickname'] + "请求加您为好友，是否同意？(按Cancel为下次再询问)");
             if result == None:
                 return
-            self.s.send(MessageType.resolve_friend_request, [frame['data']['id'], result])
+            send11(self.s, MessageType.resolve_friend_request, [frame['data']['user_id'], result])
 
         if frame['type'] == MessageType.contact_info:
             self.handle_new_contact(frame['data'])
@@ -61,11 +61,11 @@ class ContactsForm(tk.Frame):
                 messagebox.showerror('添加好友失败', frame['data'][1])
             return
 
-        if frame['type'] == MessageType.friend_on_off_line:
+        if frame['type'] == MessageType.friend_online_state:
             friend_user_id = frame['data'][1]
 
             for i in range(0, len(self.contacts)):
-                if self.contacts[i]['id'] == friend_user_id and self.contacts[i]['type'] == 0:
+                if self.contacts[i]['user_id'] == friend_user_id and self.contacts[i]['type'] == 0:
                     self.contacts[i]['online'] = frame['data'][0]
                     break
 
@@ -79,7 +79,7 @@ class ContactsForm(tk.Frame):
         self.refresh_contacts()
 
     def on_frame_click(self, e):
-        item_id = e.widget.item['id']
+        item_id = e.widget.item['user_id']
         if item_id in client.memory.window_instance[e.widget.item['type']]:
             client.memory.window_instance[e.widget.item['type']][item_id].master.deiconify()
             return
@@ -114,7 +114,7 @@ class ContactsForm(tk.Frame):
 
         for i in range(0, len(self.pack_objs)):
             frame = self.pack_objs[i]
-            if frame.item['id'] == id and frame.item['type'] == 0:
+            if frame.item['user_id'] == id and frame.item['type'] == 0:
                 self.on_frame_click(self.my_event(frame))
                 return
         result = messagebox.askyesno("是否加好友", name + "不在您的好友列表中，是否加好友？")
@@ -133,7 +133,10 @@ class ContactsForm(tk.Frame):
         self.pack_objs = []
 
         # sorted(self.contacts, cmp=compare)
-        self.contacts.sort(key=lambda x: -client.memory.last_message_timestamp[x['type']].get(x['id'], 0))
+        try:
+            self.contacts.sort(key=lambda x: -client.memory.last_message_timestamp[x['type']].get(x['room_id'], 0))
+        except:
+            self.contacts.sort(key=lambda x: -client.memory.last_message_timestamp[x['type']].get(x['user_id'], 0))
         for item in self.contacts:
             contact = ContactItem(self.scroll.interior, self.on_frame_click)
             contact.pack(fill=BOTH, expand=True)
@@ -158,12 +161,12 @@ class ContactsForm(tk.Frame):
 
             contact.last_message_time.config(text=time_message)
 
-            contact.last_message.config(text=client.memory.last_message[item['type']].get(item['id'], '(没有消息)'))
+            contact.last_message.config(text=client.memory.last_message[item['type']].get(item['user_id'], '(没有消息)'))
             contact.last_message_time.config(text=datetime.datetime.fromtimestamp(
-                int(client.memory.last_message_timestamp[item['type']].get(item['id'], 0)) / 1000
+                int(client.memory.last_message_timestamp[item['type']].get(item['user_id'], 0)) / 1000
             ).strftime('%Y-%m-%d %H:%M:%S'))
 
-            unread_count = client.memory.unread_message_count[item['type']].get(item['id'], 0)
+            unread_count = client.memory.unread_message_count[item['type']].get(item['user_id'], 0)
             contact.unread_message_count.pack_forget()
             if unread_count != 0:
                 contact.last_message.pack_forget()

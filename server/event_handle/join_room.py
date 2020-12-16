@@ -19,4 +19,9 @@ def run(s, data):
         send11(s, MessageType.general_failure, '群不存在')
         return
     database.add_to_room(user_id, data)
-    send11(s, MessageType.contact_info, add_target_type(room, 1))
+    send11(s, MessageType.contact_info, add_target_type2(room, 1))
+
+
+def add_target_type2(obj, type):
+    obj['type'] = type
+    return obj

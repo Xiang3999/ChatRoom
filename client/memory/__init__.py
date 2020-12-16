@@ -1,5 +1,5 @@
 # 这里记录一些变量的值
-user_inf = {"id": 0, "nickname": ""}
+user_inf = {"user_id": 0, "nickname": ""}
 socket = None
 tk_root = None
 
